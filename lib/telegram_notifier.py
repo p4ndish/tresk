@@ -205,7 +205,10 @@ class TelegramNotifier:
         }
         
         if thread_id:
-            payload['message_thread_id'] = thread_id
+            try:
+                payload['message_thread_id'] = int(thread_id)
+            except (ValueError, TypeError):
+                print(f"Warning: Invalid thread_id '{thread_id}', ignoring")
         
         try:
             response = requests.post(url, json=payload, timeout=10)
