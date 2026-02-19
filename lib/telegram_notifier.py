@@ -14,6 +14,16 @@ import argparse
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 import requests
+import re
+
+
+def escape_markdown_v2(text: str) -> str:
+    """Escape special characters for Telegram MarkdownV2 format"""
+    # Characters that need escaping in MarkdownV2: _ * [ ] ( ) ~ ` > # + - = | { } . !
+    escape_chars = r'_*[]()~`>#+=|{}.!'
+    for char in escape_chars:
+        text = text.replace(char, f'\\{char}')
+    return text
 
 
 class TelegramNotifier:
@@ -53,6 +63,10 @@ class TelegramNotifier:
                     if line and not line.startswith('#') and '=' in line:
                         key, value = line.split('=', 1)
                         key = key.strip()
+                        
+                        # Remove inline comments and whitespace
+                        if '#' in value:
+                            value = value.split('#')[0]
                         value = value.strip().strip('"').strip("'")
                         
                         # Convert boolean strings
@@ -61,7 +75,7 @@ class TelegramNotifier:
                         elif value.lower() in ('false', 'no', '0'):
                             config[key] = False
                         # Convert integers
-                        elif value.isdigit():
+                        elif value.lstrip('-').isdigit():
                             config[key] = int(value)
                         else:
                             config[key] = value
@@ -159,28 +173,26 @@ class TelegramNotifier:
         hostname = self.config.get('HOSTNAME', os.uname().nodename)
         public_ip = self.config.get('PUBLIC_IP', 'unknown')
         
+        # Escape all dynamic content for MarkdownV2
+        title_escaped = self._escape_markdown(title)
+        details_escaped = self._escape_markdown(details[:800])
+        recommendation_escaped = self._escape_markdown(recommendation[:400])
+        
         # Build message
-        message = f"""{emoji} *{self._escape_markdown(severity)}: {self._escape_markdown(title)}*
+        message = f"""{emoji} *{severity}: {title_escaped}*
 
 *Host:* `{hostname} ({public_ip})`
 *Time:* `{timestamp}`
 
 *Details:*
 ```
-{details[:800]}
+{details_escaped}
 ```
 
 *Recommended Actions:*
 ```
-{recommendation[:400]}
+{recommendation_escaped}
 ```"""
-        
-        # Add auto-response status
-        if self.config.get('AUTO_RESPONSE_ENABLED', False):
-            if severity == 'CRITICAL' and self.config.get('AUTO_KILL_CRITICAL', False):
-                message += "\n\n*Auto\-Response:* Process terminated ✓"
-            else:
-                message += "\n\n*Auto\-Response:* Disabled \(manual intervention required\)"
         
         return self._send_telegram_message(message)
     
