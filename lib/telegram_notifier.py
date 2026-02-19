@@ -205,6 +205,10 @@ class TelegramNotifier:
             except (ValueError, TypeError):
                 pass
         
+        # DEBUG: Show what we're sending
+        print(f"DEBUG: Sending with parse_mode={payload.get('parse_mode')}")
+        print(f"DEBUG: chat_id={chat_id}, thread_id={payload.get('message_thread_id')}")
+        
         try:
             response = requests.post(url, json=payload, timeout=10)
             result = response.json()
@@ -213,15 +217,6 @@ class TelegramNotifier:
                 print(f"Telegram message sent successfully")
                 return True
             else:
-                # If HTML parsing failed, try without formatting
-                if result.get('error_code') == 400 and 'parse' in result.get('description', '').lower():
-                    print(f"HTML parsing failed, retrying without formatting...")
-                    payload.pop('parse_mode', None)
-                    response = requests.post(url, json=payload, timeout=10)
-                    result = response.json()
-                    if result.get('ok'):
-                        print(f"Telegram message sent successfully (without formatting)")
-                        return True
                 print(f"Telegram API error: {result}")
                 return False
         except Exception as e:
