@@ -1,8 +1,8 @@
 #!/bin/bash
 ################################################################################
-# VPS Security Monitor - Installation Script
+# Tresk - Installation Script
 # Version: 1.0.0
-# Description: One-command installation for VPS Security Monitor
+# Description: One-command installation for Tresk
 ################################################################################
 
 set -e
@@ -32,7 +32,7 @@ print_banner() {
     cat <<'EOF'
 ╔═══════════════════════════════════════════════════════════════════════════╗
 ║                                                                           ║
-║              VPS SECURITY MONITOR - Installation Script                   ║
+║                      TRESK - Installation Script                          ║
 ║                                                                           ║
 ║     Production-grade Linux VPS security monitoring and alerting          ║
 ║                                                                           ║
@@ -545,7 +545,7 @@ Usage: $0 [OPTIONS]
 
 Options:
     -h, --help        Show this help message
-    -u, --uninstall   Uninstall VPS Security Monitor
+    -u, --uninstall   Uninstall Tresk
     --no-telegram     Skip Telegram configuration
     --auto-kill       Enable auto-kill for critical threats
     --portable        Force portable mode (no systemd)
@@ -590,7 +590,7 @@ main() {
                 shift
                 ;;
             -v|--version)
-                echo "VPS Security Monitor Installer v${SCRIPT_VERSION}"
+                echo "Tresk Installer v${SCRIPT_VERSION}"
                 exit 0
                 ;;
             *)
@@ -634,7 +634,7 @@ main() {
         fi
     fi
     
-    log INFO "Starting installation of VPS Security Monitor v${SCRIPT_VERSION}"
+    log INFO "Starting installation of Tresk v${SCRIPT_VERSION}"
     
     install_dependencies
     create_directories

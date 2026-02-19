@@ -1,6 +1,6 @@
 #!/bin/bash
 ################################################################################
-# VPS Security Monitor - Bootstrap Installer
+# Tresk - Bootstrap Installer
 # Version: 1.0.0
 # Description: One-command installation from GitHub/curl
 # Usage: curl -fsSL https://your-domain.com/install.sh | sudo bash
@@ -25,7 +25,7 @@ main() {
         exit 1
     fi
 
-    echo "VPS Security Monitor - Bootstrap Installer"
+    echo "Tresk - Bootstrap Installer"
     echo "=========================================="
     echo
 
