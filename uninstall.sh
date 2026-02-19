@@ -4,7 +4,8 @@
 # Version: 1.0.0
 ################################################################################
 
-set -e
+# Don't use set -e as we want to handle errors gracefully
+# set -e
 
 # Colors
 readonly RED='\033[0;31m'
@@ -61,15 +62,21 @@ uninstall() {
     rm -rf /opt/tresk
     rm -rf /etc/tresk
     
-    # Ask about logs
-    echo
-    read -p "Remove log files? (y/n) " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        rm -rf /var/log/tresk
-        log INFO "Log files removed"
+    # Ask about logs (non-interactive mode check)
+    if [[ -t 0 ]]; then
+        # Interactive mode - ask user
+        echo
+        read -p "Remove log files? (y/n) " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            rm -rf /var/log/tresk
+            log INFO "Log files removed"
+        else
+            log INFO "Log files preserved at /var/log/tresk"
+        fi
     else
-        log INFO "Log files preserved at /var/log/tresk"
+        # Non-interactive mode - preserve logs by default
+        log INFO "Non-interactive mode: Log files preserved at /var/log/tresk"
     fi
     
     # Remove logrotate config
