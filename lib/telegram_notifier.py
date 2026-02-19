@@ -130,6 +130,14 @@ class TelegramNotifier:
             'LOW': 'ℹ️'
         }
         return emoji_map.get(severity, '📋')
+
+    def _sanitize_telegram_html(self, message: str) -> str:
+        message = message.replace('<small>', '<i>').replace('</small>', '</i>')
+        message = message.replace('<SMALL>', '<i>').replace('</SMALL>', '</i>')
+        message = message.replace('<Small>', '<i>').replace('</Small>', '</i>')
+        message = message.replace('<br>', '\n').replace('<br/>', '\n').replace('<br />', '\n')
+        message = message.replace('<BR>', '\n').replace('<BR/>', '\n').replace('<BR />', '\n')
+        return message
     
     def send_alert(self, severity: str, title: str, details: str, 
                    recommendation: str = "No specific recommendation") -> bool:
@@ -195,6 +203,8 @@ class TelegramNotifier:
         
         # FIX: Remove the space after "bot"
         url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+
+        message = self._sanitize_telegram_html(message)
         
         payload = {
             'chat_id': chat_id,
