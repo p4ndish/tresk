@@ -285,15 +285,18 @@ detect_rootkits() {
     
     # Check for hidden processes
     if [[ "${DETECT_HIDDEN_PROCESSES:-true}" == "true" ]]; then
-        # Compare ps output with /proc
-        local ps_pids
-        local proc_pids
-        ps_pids=$(ps aux | awk 'NR>1 {print $2}' | sort -n | tr '\n' ' ')
-        proc_pids=$(ls /proc/ 2>/dev/null | grep -E '^[0-9]+$' | sort -n | tr '\n' ' ')
+        # Compare ps output with /proc using associative array for O(1) lookup
+        local -A ps_pid_map
+        local pid
+        
+        # Build hash map of ps PIDs for fast lookup
+        while read -r pid; do
+            [[ -n "$pid" ]] && ps_pid_map[$pid]=1
+        done < <(ps aux | awk 'NR>1 {print $2}')
         
         # Check for processes hidden from ps but in /proc
-        for pid in $proc_pids; do
-            if [[ -d "/proc/$pid" && ! "$ps_pids" =~ "$pid" ]]; then
+        while read -r pid; do
+            if [[ -d "/proc/$pid" && -z "${ps_pid_map[$pid]:-}" ]]; then
                 local cmdline
                 cmdline=$(cat "/proc/$pid/cmdline" 2>/dev/null | tr '\0' ' ' | head -c 100)
                 if [[ -n "$cmdline" ]]; then
@@ -302,7 +305,7 @@ detect_rootkits() {
                         "Investigate: cat /proc/$pid/status; ls -la /proc/$pid/"
                 fi
             fi
-        done
+        done < <(ls /proc/ 2>/dev/null | grep -E '^[0-9]+$')
     fi
     
     # Check for Reptile rootkit indicators
@@ -326,7 +329,7 @@ detect_backdoors() {
     # Check for suspicious SUID binaries
     if [[ "${SUID_CHECK:-true}" == "true" ]]; then
         local suid_list
-        suid_list=$(find / -perm -4000 -type f 2>/dev/null | grep -vE "${SUID_WHITELIST:-/usr/bin/passwd|/usr/bin/sudo}" || true)
+        suid_list=$(find / -perm -4000 -type f 2>/dev/null | grep -vE "${SUID_WHITELIST:-\/usr\/bin\/passwd|\/usr\/bin\/sudo}" || true)
         
         while IFS= read -r file; do
             if [[ -n "$file" ]]; then
@@ -378,7 +381,7 @@ detect_backdoors() {
                             "File: $file\nType: Suspicious PHP/code patterns detected" \
                             "Investigate: cat $file | head -50; Check file history"
                     fi
-                done < <(find "$webdir" -type f \( -name "*.php" -o -name "*.pl" -o -name "*.py" -o -name "*.jsp" -o -name "*.asp" -o -name "*.aspx" \) -exec grep -lE "$web_shell_patterns" {} \; 2>/dev/null | head -10)
+                done < <(timeout 30 find "$webdir" -type f \( -name "*.php" -o -name "*.pl" -o -name "*.py" -o -name "*.jsp" -o -name "*.asp" -o -name "*.aspx" \) -exec grep -lE "$web_shell_patterns" {} \; 2>/dev/null | head -10)
             fi
         done
     fi
@@ -545,7 +548,22 @@ detect_network_threats() {
         if [[ ! -f "$blocklist_file" ]] || [[ $(find "$blocklist_file" -mtime +1 2>/dev/null) ]]; then
             > "$blocklist_file"
             for url in "${BLOCKLIST_URLS[@]}"; do
-                curl -s -m 10 "$url" 2>/dev/null | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' >> "$blocklist_file" || true
+                # Download and validate IPs strictly (allow CIDR notation)
+                curl -s -m 10 "$url" 2>/dev/null | \
+                    grep -E '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}(/[0-9]{1,2})?$' | \
+                    while read -r ip; do
+                        # Validate each octet is 0-255
+                        if [[ "$ip" =~ ^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3}) ]]; then
+                            local valid=true
+                            for octet in "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}" "${BASH_REMATCH[4]}"; do
+                                if [[ "$octet" -gt 255 ]]; then
+                                    valid=false
+                                    break
+                                fi
+                            done
+                            [[ "$valid" == true ]] && echo "$ip"
+                        fi
+                    done >> "$blocklist_file" || true
             done
         fi
         
@@ -889,6 +907,11 @@ send_alert() {
     local public_ip
     public_ip="${PUBLIC_IP:-$(curl -s -m 3 ifconfig.me 2>/dev/null || echo 'unknown')}"
     
+    # Escape special Markdown characters in details and recommendation
+    local escaped_details escaped_recommendation
+    escaped_details=$(echo "$details" | sed 's/[_*\[\]()~`>#+=|{}.!-]/\\&/g')
+    escaped_recommendation=$(echo "$recommendation" | sed 's/[_*\[\]()~`>#+=|{}.!-]/\\&/g')
+    
     # Build Telegram message
     local message
     message=$(cat <<EOF
@@ -899,12 +922,12 @@ ${emoji} *${severity}: ${title}*
 
 *Details:*
 \`\`\`
-${details}
+${escaped_details}
 \`\`\`
 
 *Recommended Actions:*
 \`\`\`
-${recommendation}
+${escaped_recommendation}
 \`\`\`
 EOF
 )

@@ -62,10 +62,10 @@ tresk/
 
 ```bash
 # Using curl
-curl -fsSL https://raw.githubusercontent.com/yourusername/tresk/main/bootstrap.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/p4ndish/tresk/main/bootstrap.sh | sudo bash
 
 # Using wget
-wget -qO- https://raw.githubusercontent.com/yourusername/tresk/main/bootstrap.sh | sudo bash
+wget -qO- https://raw.githubusercontent.com/p4ndish/tresk/main/bootstrap.sh | sudo bash
 ```
 
 ### Local Installation Commands
@@ -352,7 +352,7 @@ sudo ./bin/monitor.sh quick
 ### Update Threat Signatures
 ```bash
 curl -o /opt/tresk/signatures/threat_signatures.json \
-  https://raw.githubusercontent.com/yourusername/tresk/main/signatures/threat_signatures.json
+  https://raw.githubusercontent.com/p4ndish/tresk/main/signatures/threat_signatures.json
 ```
 
 ### Reset Alert State

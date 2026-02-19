@@ -8,16 +8,16 @@ Install directly from GitHub without downloading anything first:
 
 ```bash
 # Using curl
-curl -fsSL https://raw.githubusercontent.com/yourusername/tresk/main/bootstrap.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/p4ndish/tresk/main/bootstrap.sh | sudo bash
 
 # Using wget
-wget -qO- https://raw.githubusercontent.com/yourusername/tresk/main/bootstrap.sh | sudo bash
+wget -qO- https://raw.githubusercontent.com/p4ndish/tresk/main/bootstrap.sh | sudo bash
 ```
 
 ### Method 2: Clone and Install
 
 ```bash
-git clone https://github.com/yourusername/tresk.git
+git clone https://github.com/p4ndish/tresk.git
 cd tresk
 sudo ./install.sh
 ```
@@ -25,7 +25,7 @@ sudo ./install.sh
 ### Method 3: Download Release
 
 ```bash
-wget https://github.com/yourusername/tresk/releases/download/v1.0.0/tresk-1.0.0.tar.gz
+wget https://github.com/p4ndish/tresk/releases/download/v1.0.0/tresk-1.0.0.tar.gz
 tar -xzf tresk-1.0.0.tar.gz
 cd tresk
 sudo ./install.sh
@@ -312,7 +312,7 @@ For automated deployments (Ansible, cloud-init, etc.):
 # Automated installation script
 
 cd /tmp
-wget -q https://github.com/yourusername/tresk/releases/download/v1.0.0/tresk.tar.gz
+wget -q https://github.com/p4ndish/tresk/releases/download/v1.0.0/tresk.tar.gz
 tar -xzf tresk.tar.gz
 cd tresk
 
@@ -343,4 +343,4 @@ python3 "$telegram_notifier" test
 - **Documentation**: See `docs/` directory
 - **Troubleshooting**: See `docs/TROUBLESHOOTING.md`
 - **Quick Start**: See `docs/QUICK_START.md`
-- **Issues**: https://github.com/yourusername/tresk/issues
+- **Issues**: https://github.com/p4ndish/tresk/issues

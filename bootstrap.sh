@@ -8,7 +8,7 @@
 
 set -e
 
-readonly REPO_URL="https://raw.githubusercontent.com/yourusername/tresk/main"
+readonly REPO_URL="https://raw.githubusercontent.com/p4ndish/tresk/main"
 readonly INSTALLER_URL="${REPO_URL}/install.sh"
 readonly TEMP_DIR="/tmp/tresk-install"
 

@@ -1,8 +1,8 @@
 # 🔒 Tresk - VPS Security Monitor
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/yourusername/tresk)
-[![Platform](https://img.shields.io/badge/platform-Linux-green.svg)](https://github.com/yourusername/tresk)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/p4ndish/tresk)
+[![Platform](https://img.shields.io/badge/platform-Linux-green.svg)](https://github.com/p4ndish/tresk)
 
 **Tresk** is a production-grade Linux VPS security monitoring and alerting system. Named after "threat" + "risk" detection, it provides comprehensive threat detection with Telegram integration and systemd-based watchdog architecture.
 
@@ -27,16 +27,16 @@
 
 ```bash
 # Using curl
-curl -fsSL https://raw.githubusercontent.com/yourusername/tresk/main/bootstrap.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/p4ndish/tresk/main/bootstrap.sh | sudo bash
 
 # Using wget
-wget -qO- https://raw.githubusercontent.com/yourusername/tresk/main/bootstrap.sh | sudo bash
+wget -qO- https://raw.githubusercontent.com/p4ndish/tresk/main/bootstrap.sh | sudo bash
 ```
 
 ### Manual Installation
 
 ```bash
-git clone https://github.com/yourusername/tresk.git
+git clone https://github.com/p4ndish/tresk.git
 cd tresk
 sudo ./install.sh
 ```
@@ -217,7 +217,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 💬 Support
 
-- 📧 Issues: [GitHub Issues](https://github.com/yourusername/tresk/issues)
+- 📧 Issues: [GitHub Issues](https://github.com/p4ndish/tresk/issues)
 - 📖 Docs: [Full Documentation](docs/)
 
 ---

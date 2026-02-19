@@ -1,6 +1,6 @@
 [Unit]
 Description=Tresk - Daily Summary Report
-Documentation=https://github.com/yourusername/tresk
+Documentation=https://github.com/p4ndish/tresk
 After=network.target
 
 [Service]

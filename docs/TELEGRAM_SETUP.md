@@ -56,7 +56,7 @@ help - Show help
 2. Start the bot
 3. It will reply with your user information:
    ```
-   @yourusername
+   @p4ndish
    Id: 123456789
    First: Your
    Last: Name

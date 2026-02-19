@@ -1,6 +1,6 @@
 [Unit]
 Description=Tresk - Daily Summary Timer
-Documentation=https://github.com/yourusername/tresk
+Documentation=https://github.com/p4ndish/tresk
 
 [Timer]
 OnCalendar=*-*-* 08:00:00
