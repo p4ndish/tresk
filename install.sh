@@ -276,6 +276,13 @@ setup_systemd() {
 configure_telegram() {
     log STEP "Configuring Telegram notifications..."
     
+    # Check if running in non-interactive mode
+    if [[ ! -t 0 ]]; then
+        log INFO "Non-interactive mode detected, skipping Telegram configuration"
+        log INFO "Configure manually by editing ${CONFIG_DIR}/config.conf"
+        return
+    fi
+    
     echo
     echo -e "${CYAN}═══════════════════════════════════════════════════════════${NC}"
     echo -e "${CYAN}  Telegram Bot Setup${NC}"
@@ -324,6 +331,13 @@ configure_telegram() {
 
 configure_auto_response() {
     log STEP "Configuring auto-response settings..."
+    
+    # Check if running in non-interactive mode
+    if [[ ! -t 0 ]]; then
+        log INFO "Non-interactive mode detected, auto-response disabled by default"
+        log INFO "Configure manually by editing ${CONFIG_DIR}/config.conf"
+        return
+    fi
     
     echo
     echo -e "${YELLOW}⚠️  WARNING: Auto-response can kill processes automatically${NC}"
@@ -396,12 +410,19 @@ EOF
 start_services() {
     log STEP "Starting services..."
     
-    echo
-    echo "Which services would you like to enable?"
-    echo "1) Full monitoring (recommended)"
-    echo "2) Monitoring only (no reports)"
-    echo "3) Manual start (don't enable anything)"
-    read -r service_choice
+    local service_choice="1"  # Default to full monitoring
+    
+    # Check if running in interactive mode
+    if [[ -t 0 ]]; then
+        echo
+        echo "Which services would you like to enable?"
+        echo "1) Full monitoring (recommended)"
+        echo "2) Monitoring only (no reports)"
+        echo "3) Manual start (don't enable anything)"
+        read -r service_choice
+    else
+        log INFO "Non-interactive mode: enabling full monitoring (default)"
+    fi
     
     case "$service_choice" in
         1)
@@ -619,18 +640,24 @@ main() {
         use_systemd=false
     elif ! check_systemd; then
         log WARNING "systemd is not available on this system"
-        echo
-        echo "Options:"
-        echo "  1) Continue with portable installation (uses cron)"
-        echo "  2) Exit and install manually"
-        echo
-        read -p "Choose option (1/2): " choice
-        if [[ "$choice" == "1" ]]; then
-            use_systemd=false
+        
+        if [[ -t 0 ]]; then
+            echo
+            echo "Options:"
+            echo "  1) Continue with portable installation (uses cron)"
+            echo "  2) Exit and install manually"
+            echo
+            read -p "Choose option (1/2): " choice
+            if [[ "$choice" == "1" ]]; then
+                use_systemd=false
+            else
+                log INFO "Exiting. You can run the portable installer with:"
+                log INFO "  sudo ./install-portable.sh"
+                exit 0
+            fi
         else
-            log INFO "Exiting. You can run the portable installer with:"
-            log INFO "  sudo ./install-portable.sh"
-            exit 0
+            log INFO "Non-interactive mode: defaulting to portable installation"
+            use_systemd=false
         fi
     fi
     
