@@ -71,6 +71,12 @@ class TelegramNotifier:
                         else:
                             config[key] = value
         
+        # Handle shell command substitutions in config (e.g., $(hostname))
+        if config.get('HOSTNAME', '').startswith('$('):
+            config['HOSTNAME'] = os.uname().nodename
+        if config.get('PUBLIC_IP', '').startswith('$('):
+            config['PUBLIC_IP'] = self._get_public_ip()
+        
         return config
     
     def _get_public_ip(self) -> str:
