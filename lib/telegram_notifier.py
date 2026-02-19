@@ -203,29 +203,37 @@ class TelegramNotifier:
         chat_id = self.config.get('TELEGRAM_CHAT_ID', '')
         thread_id = self.config.get('TELEGRAM_THREAD_ID', '')
         
-        # DEBUG: Add this to see what values you're actually getting
-        print(f"DEBUG: chat_id={chat_id}, thread_id={thread_id}, type={type(thread_id)}")
-        
         if not bot_token or not chat_id:
             print("Telegram bot token or chat ID not configured")
             return False
         
+        # DEBUG: Check values
+        print(f"DEBUG: chat_id={chat_id}, thread_id='{thread_id}' (type: {type(thread_id)})")
+        
         url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+        
+        # FIX: Escape message for MarkdownV2 to avoid parse errors
+        escaped_message = self._escape_markdown(message)
         
         payload = {
             'chat_id': chat_id,
-            'text': message,
+            'text': escaped_message,
             'parse_mode': 'MarkdownV2',
             'disable_web_page_preview': True
         }
         
-        # FIX: Ensure thread_id is converted to int and not empty
-        if thread_id and str(thread_id).strip():
+        # FIX: Properly handle thread_id - convert to int and validate
+        if thread_id:
             try:
-                payload['message_thread_id'] = int(thread_id)
-                print(f"DEBUG: Sending to thread_id {thread_id}")
-            except (ValueError, TypeError):
-                print(f"Warning: Invalid thread_id '{thread_id}', sending to General")
+                # Handle both string and int thread_id
+                thread_id_int = int(str(thread_id).strip())
+                if thread_id_int > 0:  # Valid topic IDs are positive integers
+                    payload['message_thread_id'] = thread_id_int
+                    print(f"DEBUG: Sending to topic/thread_id: {thread_id_int}")
+                else:
+                    print(f"DEBUG: Invalid thread_id value: {thread_id_int}, sending to General")
+            except (ValueError, TypeError) as e:
+                print(f"DEBUG: Failed to parse thread_id '{thread_id}': {e}, sending to General")
         
         try:
             response = requests.post(url, json=payload, timeout=10)
