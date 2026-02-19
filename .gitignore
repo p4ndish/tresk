@@ -1,0 +1,62 @@
+# Tresk - Git Ignore File
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# Runtime data
+pids/
+*.pid
+*.pid.lock
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Test files
+test/
+tests/
+*.test
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Local config (don't commit real credentials)
+config/config.local.conf
+.env
+.env.local
+
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+
+# Downloaded/generated files during install
+downloads/
+cache/
+
+# Alert state (runtime)
+.alert_state/
+.baseline/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Package manager
+node_modules/

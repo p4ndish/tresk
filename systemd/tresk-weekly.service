@@ -1,0 +1,12 @@
+[Unit]
+Description=Tresk - Weekly Security Report
+Documentation=https://github.com/yourusername/tresk
+After=network.target
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/opt/tresk/lib/telegram_notifier.py weekly
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=tresk-weekly

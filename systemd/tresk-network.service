@@ -1,0 +1,19 @@
+[Unit]
+Description=Tresk - Network Monitoring
+After=network.target tresk.service
+Requires=tresk.service
+
+[Service]
+Type=simple
+User=root
+ExecStart=/opt/tresk/bin/monitor.sh quick
+Restart=on-failure
+RestartSec=30
+CPUQuota=5%
+MemoryLimit=50M
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=tresk-network
+
+[Install]
+WantedBy=multi-user.target

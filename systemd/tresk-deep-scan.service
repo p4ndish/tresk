@@ -1,0 +1,14 @@
+[Unit]
+Description=Tresk - Deep Security Scan
+Documentation=https://github.com/yourusername/tresk
+After=network.target
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/opt/tresk/bin/monitor.sh deep
+CPUQuota=20%
+MemoryLimit=200M
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=tresk-deep-scan

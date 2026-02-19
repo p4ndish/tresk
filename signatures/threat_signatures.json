@@ -1,0 +1,348 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "last_updated": "2025-02-20",
+    "description": "VPS Security Monitor Threat Signature Database",
+    "author": "VPS Security Monitor"
+  },
+  "cryptominers": {
+    "description": "Cryptocurrency mining malware signatures",
+    "severity": "critical",
+    "process_names": [
+      "xmrig", "xmr-stak", "minerd", "cgminer", "bfgminer",
+      "kdevtmpfsi", "kinsing", "kthreaddi", "kthreadd",
+      "sysupdate", "networkservice", "sysguard", "update.sh",
+      "config.json", "xmrig-amd", "xmrig-nvidia", "grin-miner",
+      "ethminer", "phoenixminer", "trexminer", "nbminer",
+      "lolminer", "teamredminer", "wildrig-multi", "ccminer",
+      "cpuminer", "stratum", "pool.minexmr.com", "xmr.pool",
+      "nanopool.org", "supportxmr.com", "minergate.com"
+    ],
+    "file_paths": [
+      "/tmp/xmrig*", "/var/tmp/xmrig*", "/dev/shm/xmrig*",
+      "/tmp/kdevtmpfsi", "/var/tmp/kdevtmpfsi", "/tmp/kinsing",
+      "/var/tmp/kinsing", "/tmp/config.json", "/var/tmp/config.json",
+      "/root/.config/xmrig", "/home/*/.config/xmrig",
+      "/tmp/.X11-unix/xmrig", "/tmp/.ICE-unix/xmrig"
+    ],
+    "network_indicators": [
+      "stratum+tcp://", "stratum+ssl://", "xmrig.com",
+      "minexmr.com", "nanopool.org", "supportxmr.com",
+      "pool.hashvault.pro", "moneroocean.stream",
+      "unmineable.com", "herominers.com"
+    ],
+    "behavioral_patterns": [
+      "high_cpu_usage_sustained",
+      "hidden_process_cpu",
+      "deleted_process_exe",
+      "suspicious_mining_pool_connection"
+    ]
+  },
+  "rootkits": {
+    "description": "Rootkit and kernel-level malware signatures",
+    "severity": "critical",
+    "ld_preload_indicators": [
+      "/etc/ld.so.preload",
+      "LD_PRELOAD=",
+      "libprocesshider.so",
+      "libc.so.6",
+      "pam_unix.so",
+      "libns2.so",
+      "libncom.so"
+    ],
+    "kernel_module_indicators": [
+      "diamorphine", "reptile", "suterusu", "adore-ng",
+      "knark", "override", "phide", "modhide",
+      "sys_call_table", "idt_table", "sys_read",
+      "sys_getdents", "sys_getdents64"
+    ],
+    "hidden_process_indicators": [
+      "/proc/*/exe (deleted)",
+      "process hiding in /proc",
+      "readdir hook detected"
+    ],
+    "file_paths": [
+      "/dev/.hid", "/dev/.lib", "/dev/.usr",
+      "/lib/modules/*/kernel/drivers/reptile",
+      "/etc/rc.modules", "/etc/modules-load.d/backdoor.conf"
+    ]
+  },
+  "backdoors": {
+    "description": "Backdoor and reverse shell signatures",
+    "severity": "critical",
+    "suid_binaries": [
+      "/tmp/bash", "/var/tmp/bash", "/dev/shm/bash",
+      "/tmp/sh", "/var/tmp/sh", "/tmp/dash",
+      "/tmp/zsh", "/tmp/ksh", "/home/*/.local/bin/*",
+      "/tmp/nmap", "/tmp/nc", "/tmp/netcat",
+      "/tmp/python*", "/tmp/perl", "/tmp/ruby"
+    ],
+    "reverse_shell_patterns": [
+      "bash -i >& /dev/tcp/",
+      "/bin/sh -i >& /dev/tcp/",
+      "python -c 'import socket,subprocess,os",
+      "python3 -c 'import socket,subprocess,os",
+      "perl -e 'use Socket;$p=",
+      "ruby -rsocket -e'f=TCPSocket.open",
+      "nc -e /bin/sh", "ncat -e /bin/bash",
+      "mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc ",
+      "socat TCP4-LISTEN:*/bin/bash",
+      "socket(2,1,6);connect(0,pack_sockaddr_in"
+    ],
+    "web_shell_signatures": [
+      "eval(base64_decode(", "eval(gzinflate(", "eval(str_rot13(",
+      "assert(base64_decode(", "preg_replace('/.*/e',",
+      "system($_GET['cmd'])", "exec($_POST['cmd'])",
+      "shell_exec($_REQUEST", "passthru($_GET",
+      "eval($_POST[", "eval($_REQUEST[", "eval($_GET[",
+      "base64_decode($_POST", "gzinflate(base64_decode",
+      "str_rot13(base64_decode", "create_function(",
+      "array_map('assert'", "array_filter(array_map("
+    ],
+    "authorized_keys_backdoor": [
+      "ssh-rsa AAAA", "ssh-ed25519 AAAA",
+      "command=\"*\"", "no-pty,*", "permitopen=*"
+    ]
+  },
+  "ransomware": {
+    "description": "Ransomware and file encryption signatures",
+    "severity": "critical",
+    "file_extensions": [
+      ".encrypted", ".locked", ".crypto", ".crypt",
+      ".vault", ".ransom", ".enc", ".crypted",
+      ".locked3", ".kraken", ".locked4", ".zepto",
+      ".locky", ".cerber", ".wannacry", ".wncry",
+      ".cryptowall", ".cryptolocker", ".teslacrypt"
+    ],
+    "ransom_notes": [
+      "README_DECRYPT.txt", "HOW_TO_DECRYPT.html",
+      "DECRYPT_INSTRUCTIONS.txt", "RECOVER_FILES.txt",
+      "HELP_DECRYPT.txt", "YOUR_FILES_ARE_ENCRYPTED.txt",
+      "@Please_Read_Me@.txt", "DECRYPT-FILES.txt"
+    ],
+    "behavioral_indicators": [
+      "mass_file_modification",
+      "rapid_encryption_activity",
+      "shadow_copy_deletion",
+      "backup_deletion"
+    ]
+  },
+  "botnets_c2": {
+    "description": "Botnet and command & control signatures",
+    "severity": "high",
+    "c2_domains": [
+      "*.onion", "*.i2p", "tor2web.*",
+      "checkip.dyndns.org", "checkip.amazonaws.com"
+    ],
+    "suspicious_ports": [
+      4444, 5555, 6666, 7777, 8888, 9999,
+      31337, 12345, 54321, 9876, 11111
+    ],
+    "beaconing_indicators": [
+      "regular_interval_connections",
+      "dns_tunneling_detected",
+      "icmp_tunneling",
+      "domain_generation_algorithm"
+    ],
+    "irc_botnet_signatures": [
+      "NICK ", "USER ", "JOIN #", "PRIVMSG #",
+      "irc.", ".irc.", "6667", "6666", "6665"
+    ]
+  },
+  "container_escapes": {
+    "description": "Docker and container escape signatures",
+    "severity": "critical",
+    "escape_indicators": [
+      "docker -H unix:///var/run/docker.sock",
+      "docker.sock", "/var/run/docker.sock",
+      "privileged: true", "--privileged",
+      "--pid=host", "--net=host", "--ipc=host",
+      "-v /:/mnt", "-v /root:/root",
+      "--cap-add=ALL", "cap_add: [\"ALL\"]",
+      "runc exploit", "CVE-2019-5736",
+      "containerd-shim exploit", "runc CVE"
+    ],
+    "suspicious_mounts": [
+      "/var/run/docker.sock:/var/run/docker.sock",
+      "/:/host", "/root:/root", "/proc:/host/proc",
+      "/sys:/host/sys"
+    ],
+    "kubernetes_indicators": [
+      "serviceaccount/token", "/var/run/secrets/kubernetes.io",
+      "kubectl", "kubelet", "etcd", "apiserver"
+    ]
+  },
+  "persistence_mechanisms": {
+    "description": "Persistence and persistence mechanism signatures",
+    "severity": "high",
+    "cron_locations": [
+      "/etc/crontab", "/etc/cron.d/*", "/etc/cron.hourly/*",
+      "/etc/cron.daily/*", "/etc/cron.weekly/*", "/etc/cron.monthly/*",
+      "/var/spool/cron/*", "/var/spool/cron/crontabs/*"
+    ],
+    "systemd_persistence": [
+      "/etc/systemd/system/*.service", "/lib/systemd/system/*.service",
+      "/usr/lib/systemd/system/*.service", "/home/*/.config/systemd/user/*",
+      "/root/.config/systemd/user/*"
+    ],
+    "init_persistence": [
+      "/etc/init.d/*", "/etc/rc.d/*", "/etc/rc.local",
+      "/etc/inittab", "/etc/profile.d/*"
+    ],
+    "shell_persistence": [
+      "/root/.bashrc", "/root/.bash_profile", "/root/.profile",
+      "/root/.zshrc", "/home/*/.bashrc", "/home/*/.bash_profile",
+      "/etc/profile", "/etc/bash.bashrc"
+    ],
+    "ssh_persistence": [
+      "/root/.ssh/authorized_keys", "/home/*/.ssh/authorized_keys",
+      "/root/.ssh/config", "/etc/ssh/sshd_config"
+    ],
+    "suid_backdoors": [
+      "cp /bin/bash /tmp/bash; chmod +s /tmp/bash",
+      "chmod u+s /bin/bash", "chmod u+s /bin/dash",
+      "chmod u+s /bin/sh", "chmod u+s /usr/bin/find"
+    ]
+  },
+  "privilege_escalation": {
+    "description": "Privilege escalation attempt signatures",
+    "severity": "critical",
+    "sudo_abuse": [
+      "sudo -l", "sudo su -", "sudo bash",
+      "sudo sh", "sudo -i", "sudo /bin/bash",
+      "ALL=(ALL) NOPASSWD: ALL", "NOPASSWD: /bin/bash",
+      "NOPASSWD: /bin/sh", "NOPASSWD: ALL"
+    ],
+    "suid_exploitation": [
+      "find / -perm -4000", "find / -perm -u=s",
+      "pkexec", "sudoedit", "sudo -u#-1",
+      "CVE-2021-4034", "PwnKit"
+    ],
+    "kernel_exploits": [
+      "dirtycow", "dirtyc0w", "CVE-2016-5195",
+      "privilege escalation kernel", "local root exploit",
+      "overlayfs", "fuse exploit"
+    ],
+    "capabilities_abuse": [
+      "cap_setuid", "cap_sys_admin", "cap_sys_ptrace",
+      "cap_dac_read_search", "cap_sys_module"
+    ]
+  },
+  "ssh_attacks": {
+    "description": "SSH brute force and attack signatures",
+    "severity": "high",
+    "brute_force_indicators": [
+      "Failed password for root",
+      "Failed password for admin",
+      "authentication failure",
+      "Connection closed by authenticating user",
+      "Invalid user * from *"
+    ],
+    "suspicious_ssh_keys": [
+      "ssh-rsa AAAA3NzaC1yc2EAAAABIwAAAQEAx", 
+      "default_key", "test_key", "backdoor_key"
+    ],
+    "ssh_tunneling": [
+      "-R ", "-L ", "-D ", "DynamicForward",
+      "RemoteForward", "LocalForward",
+      "GatewayPorts yes", "AllowTcpForwarding yes"
+    ]
+  },
+  "supply_chain": {
+    "description": "Supply chain attack signatures",
+    "severity": "high",
+    "malicious_packages": [
+      "node-ipc", "colors.js", "faker.js",
+      "rc", "coa", "ua-parser-js",
+      "event-stream", "flatmap-stream",
+      "getcookies", "mailparser"
+    ],
+    "typosquatting_indicators": [
+      "reqeust", "urllib3s", "djanga",
+      "python-dateutilz", "acqusition"
+    ],
+    "tampered_binaries": [
+      "hash_mismatch", "signature_invalid",
+      "unexpected_binary_location"
+    ]
+  },
+  "fileless_malware": {
+    "description": "Fileless and memory-only attack signatures",
+    "severity": "critical",
+    "indicators": [
+      "/dev/shm/*", "/dev/pts/*", "/run/shm/*",
+      "memfd_create", "fexecve", "execveat",
+      "process running from deleted executable",
+      "fileless execution detected"
+    ],
+    "memory_injection": [
+      "ptrace injection", "process hollowing",
+      "reflective dll injection", "sliver payload"
+    ]
+  },
+  "network_attacks": {
+    "description": "Network-based attack signatures",
+    "severity": "high",
+    "port_scan_indicators": [
+      "nmap scan", "masscan", "zmap",
+      "rapid connection attempts",
+      "SYN flood pattern"
+    ],
+    "dns_tunneling": [
+      "long dns queries", "high dns query volume",
+      "suspicious dns txt records", "iodine", "dnscat2"
+    ],
+    "icmp_tunneling": [
+      "large icmp packets", "icmp data exfiltration",
+      "ptunnel", "icmpsh"
+    ]
+  },
+  "gpu_abuse": {
+    "description": "GPU abuse for mining or computation",
+    "severity": "medium",
+    "indicators": [
+      "nvidia-smi", "nvidia-ml-py", "pycuda",
+      "rocm-smi", "amd-smi", "clinfo",
+      "high gpu usage", "gpu temperature spike"
+    ]
+  },
+  "lolbas": {
+    "description": "Living Off The Land Binaries and Scripts",
+    "severity": "medium",
+    "indicators": [
+      "certutil -urlcache -split -f",
+      "bitsadmin /transfer", "mshta javascript:",
+      "regsvr32 /s /n /u /i:", "rundll32 javascript:",
+      "powershell -enc", "powershell -nop -w hidden",
+      "wmic process call create", "csript //e:jscript"
+    ]
+  },
+  "cloud_metadata_exploitation": {
+    "description": "Cloud metadata service exploitation",
+    "severity": "critical",
+    "indicators": [
+      "169.254.169.254", "metadata.google.internal",
+      "metadata.aws", "169.254.170.2",
+      "IMDSv1", "X-Forwarded-For: 169.254.169.254",
+      "curl http://169.254.169.254", "wget 169.254.169.254"
+    ]
+  },
+  "redis_exploitation": {
+    "description": "Redis exploitation and abuse",
+    "severity": "high",
+    "indicators": [
+      "redis-cli", "CONFIG SET dir", "CONFIG SET dbfilename",
+      "SLAVEOF", "MODULE LOAD", "RedisRaider",
+      "redis bruteforce", "unauthorized redis access"
+    ]
+  },
+  "docker_api_abuse": {
+    "description": "Docker API exposure abuse",
+    "severity": "critical",
+    "indicators": [
+      "2375", "2376", "docker daemon -H tcp://",
+      "containers/json", "containers/create",
+      "exec/create", "unauthorized docker api access"
+    ]
+  }
+}
