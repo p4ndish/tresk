@@ -80,6 +80,9 @@ uninstall() {
     rm -f /etc/cron.d/tresk
     rm -f /etc/cron.d/vps-security-monitor  # Legacy cleanup
     
+    # Remove command symlink
+    rm -f /usr/local/bin/tresk
+    
     log SUCCESS "Tresk has been uninstalled successfully"
 }
 

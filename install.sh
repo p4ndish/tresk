@@ -206,6 +206,19 @@ create_directories() {
     log SUCCESS "Directories created"
 }
 
+create_symlink() {
+    log STEP "Creating command symlink..."
+    
+    # Create symlink for easy command access
+    if [[ -L /usr/local/bin/tresk ]]; then
+        rm -f /usr/local/bin/tresk
+    fi
+    ln -sf "${INSTALL_DIR}/bin/monitor.sh" /usr/local/bin/tresk
+    
+    log SUCCESS "Command 'tresk' is now available"
+    log INFO "Usage: tresk [quick|deep|full|monitor|summary|weekly|help]"
+}
+
 install_files() {
     log STEP "Installing files..."
     
@@ -444,6 +457,9 @@ verify_installation() {
     # Check executables
     [[ -x "${INSTALL_DIR}/bin/monitor.sh" ]] || { log ERROR "monitor.sh not executable"; ((errors++)); }
     
+    # Check symlink
+    [[ -L "/usr/local/bin/tresk" ]] || { log WARNING "Command symlink missing"; }
+    
     # Check directories
     [[ -d "$LOG_DIR" ]] || { log ERROR "Log directory missing"; ((errors++)); }
     
@@ -461,23 +477,23 @@ verify_installation() {
 # =============================================================================
 
 uninstall() {
-    log STEP "Uninstalling VPS Security Monitor..."
+    log STEP "Uninstalling Tresk..."
     
     # Stop and disable services
-    systemctl stop vps-security-monitor.service 2>/dev/null || true
-    systemctl stop vps-security-deep-scan.timer 2>/dev/null || true
-    systemctl stop vps-security-summary.timer 2>/dev/null || true
-    systemctl stop vps-security-weekly.timer 2>/dev/null || true
+    systemctl stop tresk.service 2>/dev/null || true
+    systemctl stop tresk-deep-scan.timer 2>/dev/null || true
+    systemctl stop tresk-summary.timer 2>/dev/null || true
+    systemctl stop tresk-weekly.timer 2>/dev/null || true
     
-    systemctl disable vps-security-monitor.service 2>/dev/null || true
-    systemctl disable vps-security-deep-scan.timer 2>/dev/null || true
-    systemctl disable vps-security-summary.timer 2>/dev/null || true
-    systemctl disable vps-security-weekly.timer 2>/dev/null || true
+    systemctl disable tresk.service 2>/dev/null || true
+    systemctl disable tresk-deep-scan.timer 2>/dev/null || true
+    systemctl disable tresk-summary.timer 2>/dev/null || true
+    systemctl disable tresk-weekly.timer 2>/dev/null || true
     
     # Remove systemd files
     rm -f "${SYSTEMD_DIR}/tresk.service"
-    rm -f "${SYSTEMD_DIR}/tresk-*.service"
-    rm -f "${SYSTEMD_DIR}/tresk-*.timer"
+    rm -f "${SYSTEMD_DIR}"/tresk-*.service
+    rm -f "${SYSTEMD_DIR}"/tresk-*.timer
     systemctl daemon-reload
     
     # Remove installation directory
@@ -486,7 +502,11 @@ uninstall() {
     rm -rf "$LOG_DIR"
     
     # Remove logrotate config
-    rm -f /etc/logrotate.d/vps-security-monitor
+    rm -f /etc/logrotate.d/tresk
+    rm -f /etc/logrotate.d/vps-security-monitor  # Legacy cleanup
+    
+    # Remove command symlink
+    rm -f /usr/local/bin/tresk
     
     log SUCCESS "Tresk uninstalled successfully"
 }
@@ -618,6 +638,7 @@ main() {
     install_dependencies
     create_directories
     install_files
+    create_symlink
     
     if [[ "$use_systemd" == true ]]; then
         setup_systemd
@@ -665,11 +686,11 @@ main() {
         echo "To run manually: ${INSTALL_DIR}/bin/monitor.sh quick"
     fi
     
-    echo "  ${INSTALL_DIR}/bin/monitor.sh quick      # Run quick scan"
-    echo "  ${INSTALL_DIR}/bin/monitor.sh deep       # Run deep scan"
-    echo "  ${INSTALL_DIR}/bin/monitor.sh test-telegram  # Test Telegram"
+    echo "  tresk quick        # Run quick scan"
+    echo "  tresk deep         # Run deep scan"
+    echo "  tresk test-telegram    # Test Telegram"
     echo
-    echo "For help: ${INSTALL_DIR}/bin/monitor.sh --help"
+    echo "For help: tresk --help"
     echo
 }
 

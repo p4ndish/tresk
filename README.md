@@ -67,17 +67,34 @@ sudo ./install.sh
 
 ## 🎯 Usage
 
-### Manual Scans
+### Command Line Usage
+
+After installation, use the `tresk` command from anywhere:
 
 ```bash
 # Quick scan (5 minutes)
-sudo /opt/tresk/bin/monitor.sh quick
+sudo tresk quick
 
 # Deep scan (comprehensive)
-sudo /opt/tresk/bin/monitor.sh deep
+sudo tresk deep
 
 # Full audit
-sudo /opt/tresk/bin/monitor.sh full
+sudo tresk full
+
+# Start monitoring daemon
+sudo tresk monitor
+
+# Send daily summary
+sudo tresk summary
+
+# Send weekly report
+sudo tresk weekly
+
+# Test Telegram
+sudo tresk test-telegram
+
+# Show help
+sudo tresk --help
 ```
 
 ### Service Management (systemd)
@@ -99,7 +116,7 @@ sudo systemctl restart tresk
 
 ```bash
 # Test connection
-/opt/tresk/bin/monitor.sh test-telegram
+sudo tresk test-telegram
 
 # Send test alert
 /opt/tresk/lib/telegram_notifier.py alert "Test message"

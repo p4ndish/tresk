@@ -122,6 +122,17 @@ EOF
     log SUCCESS "Cron jobs configured"
 }
 
+create_symlink() {
+    log STEP "Creating command symlink..."
+    
+    if [[ -L /usr/local/bin/tresk ]]; then
+        rm -f /usr/local/bin/tresk
+    fi
+    ln -sf "${INSTALL_DIR}/bin/monitor.sh" /usr/local/bin/tresk
+    
+    log SUCCESS "Command 'tresk' is now available"
+}
+
 setup_logrotate() {
     log STEP "Setting up log rotation..."
     cat > /etc/logrotate.d/tresk <<EOF
@@ -180,8 +191,11 @@ show_summary() {
     echo "  ${INSTALL_DIR}/bin/monitor.sh full       # Run full audit"
     echo "  tail -f ${LOG_DIR}/monitor.log           # View logs"
     echo
-    echo "To run manually as a daemon:"
-    echo "  ${INSTALL_DIR}/bin/monitor.sh monitor &"
+    echo "Quick commands:"
+    echo "  tresk quick      # Run quick scan"
+    echo "  tresk deep       # Run deep scan"
+    echo "  tresk monitor    # Run as daemon"
+    echo "  tresk --help     # Show all commands"
     echo
     echo "To uninstall: ${INSTALL_DIR}/bin/monitor.sh --uninstall"
     echo
@@ -204,6 +218,7 @@ EOF
     
     create_directories
     install_files
+    create_symlink
     setup_cron
     setup_logrotate
     
