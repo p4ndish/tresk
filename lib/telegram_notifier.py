@@ -193,12 +193,13 @@ class TelegramNotifier:
             print("Telegram bot token or chat ID not configured")
             return False
         
+        # FIX: Remove the space after "bot"
         url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
         
         payload = {
             'chat_id': chat_id,
             'text': message,
-            'parse_mode': 'HTML',
+            'parse_mode': 'HTML',  # HTML is much safer than MarkdownV2
             'disable_web_page_preview': True
         }
         
@@ -208,12 +209,9 @@ class TelegramNotifier:
                 thread_id_int = int(str(thread_id).strip())
                 if thread_id_int > 0:
                     payload['message_thread_id'] = thread_id_int
+                    print(f"DEBUG: Sending to topic {thread_id_int}")
             except (ValueError, TypeError):
-                pass
-        
-        # DEBUG: Show what we're sending
-        print(f"DEBUG: Sending with parse_mode={payload.get('parse_mode')}")
-        print(f"DEBUG: chat_id={chat_id}, thread_id={payload.get('message_thread_id')}")
+                print(f"DEBUG: Invalid thread_id '{thread_id}', sending to General")
         
         try:
             response = requests.post(url, json=payload, timeout=10)
