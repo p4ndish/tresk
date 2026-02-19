@@ -196,12 +196,15 @@ class TelegramNotifier:
         
         return self._send_telegram_message(message)
     
-    def _send_telegram_message(self, message: str, use_markdown: bool = True) -> bool:
+    def _send_telegram_message(self, message: str) -> bool:
         """Send message to Telegram"""
         
         bot_token = self.config.get('TELEGRAM_BOT_TOKEN', '')
         chat_id = self.config.get('TELEGRAM_CHAT_ID', '')
         thread_id = self.config.get('TELEGRAM_THREAD_ID', '')
+        
+        # DEBUG: Add this to see what values you're actually getting
+        print(f"DEBUG: chat_id={chat_id}, thread_id={thread_id}, type={type(thread_id)}")
         
         if not bot_token or not chat_id:
             print("Telegram bot token or chat ID not configured")
@@ -212,18 +215,17 @@ class TelegramNotifier:
         payload = {
             'chat_id': chat_id,
             'text': message,
+            'parse_mode': 'MarkdownV2',
             'disable_web_page_preview': True
         }
         
-        # Only add parse_mode if using Markdown
-        if use_markdown:
-            payload['parse_mode'] = 'MarkdownV2'
-        
-        if thread_id:
+        # FIX: Ensure thread_id is converted to int and not empty
+        if thread_id and str(thread_id).strip():
             try:
                 payload['message_thread_id'] = int(thread_id)
+                print(f"DEBUG: Sending to thread_id {thread_id}")
             except (ValueError, TypeError):
-                print(f"Warning: Invalid thread_id '{thread_id}', ignoring")
+                print(f"Warning: Invalid thread_id '{thread_id}', sending to General")
         
         try:
             response = requests.post(url, json=payload, timeout=10)
@@ -233,15 +235,6 @@ class TelegramNotifier:
                 print(f"Telegram message sent successfully")
                 return True
             else:
-                # If Markdown parsing failed, try without Markdown
-                if result.get('error_code') == 400 and 'parse entities' in result.get('description', ''):
-                    print(f"Markdown parsing failed, retrying without formatting...")
-                    payload.pop('parse_mode', None)
-                    response = requests.post(url, json=payload, timeout=10)
-                    result = response.json()
-                    if result.get('ok'):
-                        print(f"Telegram message sent successfully (without formatting)")
-                        return True
                 print(f"Telegram API error: {result}")
                 return False
         except Exception as e:
