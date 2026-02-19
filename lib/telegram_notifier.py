@@ -196,7 +196,7 @@ class TelegramNotifier:
         
         return self._send_telegram_message(message)
     
-    def _send_telegram_message(self, message: str) -> bool:
+    def _send_telegram_message(self, message: str, use_markdown: bool = True) -> bool:
         """Send message to Telegram"""
         
         bot_token = self.config.get('TELEGRAM_BOT_TOKEN', '')
@@ -212,9 +212,12 @@ class TelegramNotifier:
         payload = {
             'chat_id': chat_id,
             'text': message,
-            'parse_mode': 'MarkdownV2',
             'disable_web_page_preview': True
         }
+        
+        # Only add parse_mode if using Markdown
+        if use_markdown:
+            payload['parse_mode'] = 'MarkdownV2'
         
         if thread_id:
             try:
@@ -230,6 +233,15 @@ class TelegramNotifier:
                 print(f"Telegram message sent successfully")
                 return True
             else:
+                # If Markdown parsing failed, try without Markdown
+                if result.get('error_code') == 400 and 'parse entities' in result.get('description', ''):
+                    print(f"Markdown parsing failed, retrying without formatting...")
+                    payload.pop('parse_mode', None)
+                    response = requests.post(url, json=payload, timeout=10)
+                    result = response.json()
+                    if result.get('ok'):
+                        print(f"Telegram message sent successfully (without formatting)")
+                        return True
                 print(f"Telegram API error: {result}")
                 return False
         except Exception as e:
@@ -437,7 +449,8 @@ _Next report: Next week_"""
             return False
         
         hostname = self.config.get('HOSTNAME', os.uname().nodename)
-        message = f"🧪 Test message from VPS Security Monitor on {hostname}"
+        hostname_escaped = self._escape_markdown(hostname)
+        message = f"🧪 *Test message from Tresk on {hostname_escaped}*\n\n✅ Your Telegram notifications are working correctly\!"
         
         return self._send_telegram_message(message)
 
