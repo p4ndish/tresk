@@ -291,13 +291,14 @@ class TelegramNotifier:
         
         message = f"""🧪 <b>Test message from Tresk</b>
 
-Host: <code>{html.escape(hostname)}</code>
-✅ Your Telegram notifications are working correctly!
+    Host: <code>{html.escape(hostname)}</code>
+    ✅ Your Telegram notifications are working correctly!
 
-<i>This is a test message from Tresk Security Monitor</i>"""
+    <i>This is a test message from Tresk Security Monitor</i>"""
         
+        # FIX: Use <i> instead of <small>
         if thread_id:
-            message += f"\n\n<small>Sent to topic ID: {html.escape(str(thread_id))}</small>"
+            message += f"\n\n<i>Sent to topic ID: {html.escape(str(thread_id))}</i>"
         
         return self._send_telegram_message(message)
 
