@@ -1355,7 +1355,13 @@ test_telegram() {
 # =============================================================================
 
 main() {
-    local command="monitor"
+    local command=""
+    
+    # Show help if no arguments
+    if [[ $# -eq 0 ]]; then
+        show_help
+        exit 0
+    fi
     
     # Parse arguments
     while [[ $# -gt 0 ]]; do
@@ -1388,6 +1394,11 @@ main() {
                 ;;
         esac
     done
+    
+    # Default to monitor if no command specified (but args were given)
+    if [[ -z "$command" ]]; then
+        command="monitor"
+    fi
     
     # Initialize
     log_init
