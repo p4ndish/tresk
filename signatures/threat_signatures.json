@@ -10,7 +10,7 @@
     "severity": "critical",
     "process_names": [
       "xmrig", "xmr-stak", "minerd", "cgminer", "bfgminer",
-      "kdevtmpfsi", "kinsing", "kthreaddi", "kthreadd",
+      "kdevtmpfsi", "kinsing", "kthreaddi",
       "sysupdate", "networkservice", "sysguard", "update.sh",
       "config.json", "xmrig-amd", "xmrig-nvidia", "grin-miner",
       "ethminer", "phoenixminer", "trexminer", "nbminer",

@@ -140,6 +140,10 @@ detect_cryptominers() {
                 cmd=$(echo "$line" | cut -d' ' -f11-)
                 
                 if [[ -n "$pid" && "$pid" =~ ^[0-9]+$ ]]; then
+                    # Skip system processes (PID < 100 are kernel/init processes)
+                    if [[ "$pid" -lt 100 ]]; then
+                        continue
+                    fi
                     # Check if process is in protected list
                     if [[ ! "$cmd" =~ $PROTECTED_PROCESSES ]]; then
                         threats_found+=("PID:$pid|CMD:$cmd")
