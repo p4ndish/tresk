@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
-VPS Security Monitor - Telegram Notification Module
+Tresk - Telegram Notification Module
 Version: 1.0.0
-Description: Advanced Telegram notification system with rich formatting
+Description: Advanced Telegram notification system with HTML formatting
 """
 
+import html
 import json
 import sys
 import os
@@ -14,20 +15,10 @@ import argparse
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 import requests
-import re
-
-
-def escape_markdown_v2(text: str) -> str:
-    """Escape special characters for Telegram MarkdownV2 format"""
-    # Characters that need escaping in MarkdownV2: _ * [ ] ( ) ~ ` > # + - = | { } . !
-    escape_chars = r'_*[]()~`>#+=|{}.!'
-    for char in escape_chars:
-        text = text.replace(char, f'\\{char}')
-    return text
 
 
 class TelegramNotifier:
-    """Advanced Telegram notification system for VPS Security Monitor"""
+    """Advanced Telegram notification system for Tresk"""
     
     def __init__(self, config_file: str = "/etc/tresk/config.conf"):
         self.config_file = config_file
@@ -42,6 +33,8 @@ class TelegramNotifier:
             'TELEGRAM_BOT_TOKEN': '',
             'TELEGRAM_CHAT_ID': '',
             'TELEGRAM_THREAD_ID': '',
+            'HOSTNAME': '',
+            'PUBLIC_IP': '',
             'ALERT_CRITICAL': True,
             'ALERT_HIGH': True,
             'ALERT_MEDIUM': True,
@@ -50,8 +43,6 @@ class TelegramNotifier:
             'ALERT_COOLDOWN_HIGH': 60,
             'ALERT_COOLDOWN_MEDIUM': 300,
             'ALERT_COOLDOWN_LOW': 3600,
-            'HOSTNAME': os.uname().nodename,
-            'PUBLIC_IP': self._get_public_ip(),
             'AUTO_RESPONSE_ENABLED': False,
             'AUTO_KILL_CRITICAL': False,
         }
@@ -64,7 +55,7 @@ class TelegramNotifier:
                         key, value = line.split('=', 1)
                         key = key.strip()
                         
-                        # Remove inline comments and whitespace
+                        # Remove inline comments
                         if '#' in value:
                             value = value.split('#')[0]
                         value = value.strip().strip('"').strip("'")
@@ -130,22 +121,13 @@ class TelegramNotifier:
             'CRITICAL': '🚨',
             'HIGH': '⚠️',
             'MEDIUM': '🔶',
-            'LOW': 'ℹ️',
-            'INFO': '📋'
+            'LOW': 'ℹ️'
         }
         return emoji_map.get(severity, '📋')
     
-    def _escape_markdown(self, text: str) -> str:
-        """Escape special characters for Telegram Markdown"""
-        # Escape special characters
-        chars_to_escape = ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
-        for char in chars_to_escape:
-            text = text.replace(char, f'\\{char}')
-        return text
-    
     def send_alert(self, severity: str, title: str, details: str, 
                    recommendation: str = "No specific recommendation") -> bool:
-        """Send alert via Telegram"""
+        """Send alert via Telegram using HTML formatting"""
         
         if not self.config.get('TELEGRAM_ENABLED', False):
             print(f"Telegram disabled. Local log: [{severity}] {title}")
@@ -173,31 +155,29 @@ class TelegramNotifier:
         hostname = self.config.get('HOSTNAME', os.uname().nodename)
         public_ip = self.config.get('PUBLIC_IP', 'unknown')
         
-        # Escape all dynamic content for MarkdownV2
-        title_escaped = self._escape_markdown(title)
-        details_escaped = self._escape_markdown(details[:800])
-        recommendation_escaped = self._escape_markdown(recommendation[:400])
+        # Build message with HTML formatting
+        message = f"""{emoji} <b>{html.escape(severity)}: {html.escape(title)}</b>
+
+<b>Host:</b> <code>{html.escape(hostname)} ({html.escape(public_ip)})</code>
+<b>Time:</b> <code>{html.escape(timestamp)}</code>
+
+<b>Details:</b>
+<pre>{html.escape(details[:800])}</pre>
+
+<b>Recommended Actions:</b>
+<pre>{html.escape(recommendation[:400])}</pre>"""
         
-        # Build message
-        message = f"""{emoji} *{severity}: {title_escaped}*
-
-*Host:* `{hostname} ({public_ip})`
-*Time:* `{timestamp}`
-
-*Details:*
-```
-{details_escaped}
-```
-
-*Recommended Actions:*
-```
-{recommendation_escaped}
-```"""
+        # Add auto-response status
+        if self.config.get('AUTO_RESPONSE_ENABLED', False):
+            if severity == 'CRITICAL' and self.config.get('AUTO_KILL_CRITICAL', False):
+                message += "\n\n<b>Auto-Response:</b> Process terminated ✓"
+            else:
+                message += "\n\n<b>Auto-Response:</b> Disabled (manual intervention required)"
         
         return self._send_telegram_message(message)
     
     def _send_telegram_message(self, message: str) -> bool:
-        """Send message to Telegram"""
+        """Send message to Telegram using HTML formatting"""
         
         bot_token = self.config.get('TELEGRAM_BOT_TOKEN', '')
         chat_id = self.config.get('TELEGRAM_CHAT_ID', '')
@@ -207,33 +187,23 @@ class TelegramNotifier:
             print("Telegram bot token or chat ID not configured")
             return False
         
-        # DEBUG: Check values
-        print(f"DEBUG: chat_id={chat_id}, thread_id='{thread_id}' (type: {type(thread_id)})")
-        
         url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-        
-        # FIX: Escape message for MarkdownV2 to avoid parse errors
-        escaped_message = self._escape_markdown(message)
         
         payload = {
             'chat_id': chat_id,
-            'text': escaped_message,
-            'parse_mode': 'MarkdownV2',
+            'text': message,
+            'parse_mode': 'HTML',
             'disable_web_page_preview': True
         }
         
-        # FIX: Properly handle thread_id - convert to int and validate
+        # Handle thread_id for topics
         if thread_id:
             try:
-                # Handle both string and int thread_id
                 thread_id_int = int(str(thread_id).strip())
-                if thread_id_int > 0:  # Valid topic IDs are positive integers
+                if thread_id_int > 0:
                     payload['message_thread_id'] = thread_id_int
-                    print(f"DEBUG: Sending to topic/thread_id: {thread_id_int}")
-                else:
-                    print(f"DEBUG: Invalid thread_id value: {thread_id_int}, sending to General")
-            except (ValueError, TypeError) as e:
-                print(f"DEBUG: Failed to parse thread_id '{thread_id}': {e}, sending to General")
+            except (ValueError, TypeError):
+                pass
         
         try:
             response = requests.post(url, json=payload, timeout=10)
@@ -243,6 +213,15 @@ class TelegramNotifier:
                 print(f"Telegram message sent successfully")
                 return True
             else:
+                # If HTML parsing failed, try without formatting
+                if result.get('error_code') == 400 and 'parse' in result.get('description', '').lower():
+                    print(f"HTML parsing failed, retrying without formatting...")
+                    payload.pop('parse_mode', None)
+                    response = requests.post(url, json=payload, timeout=10)
+                    result = response.json()
+                    if result.get('ok'):
+                        print(f"Telegram message sent successfully (without formatting)")
+                        return True
                 print(f"Telegram API error: {result}")
                 return False
         except Exception as e:
@@ -262,124 +241,14 @@ class TelegramNotifier:
         public_ip = self.config.get('PUBLIC_IP', 'unknown')
         timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
         
-        # Gather system statistics
-        try:
-            import subprocess
-            
-            # Get system info
-            uptime = subprocess.check_output(['uptime'], text=True).strip()
-            load_avg = uptime.split('load average:')[-1].strip() if 'load average:' in uptime else 'N/A'
-            
-            # Get CPU usage
-            try:
-                cpu_info = subprocess.check_output(['top', '-bn1'], text=True)
-                cpu_line = [l for l in cpu_info.split('\n') if 'Cpu(s)' in l]
-                cpu_usage = cpu_line[0].split(',')[0].split(':')[1].strip() if cpu_line else 'N/A'
-            except:
-                cpu_usage = 'N/A'
-            
-            # Get memory usage
-            try:
-                mem_info = subprocess.check_output(['free'], text=True)
-                mem_line = [l for l in mem_info.split('\n') if l.startswith('Mem:')]
-                if mem_line:
-                    parts = mem_line[0].split()
-                    mem_usage = f"{float(parts[2]) / float(parts[1]) * 100:.1f}%"
-                else:
-                    mem_usage = 'N/A'
-            except:
-                mem_usage = 'N/A'
-            
-            # Get disk usage
-            try:
-                disk_info = subprocess.check_output(['df', '-h', '/'], text=True)
-                disk_usage = disk_info.split('\n')[1].split()[4]
-            except:
-                disk_usage = 'N/A'
-            
-            # Get active users
-            try:
-                users = subprocess.check_output(['who'], text=True).strip().split('\n')
-                active_users = len([u for u in users if u.strip()])
-            except:
-                active_users = 0
-            
-            # Get failed SSH attempts
-            try:
-                auth_log = subprocess.check_output(
-                    ['grep', '-c', 'Failed password', '/var/log/auth.log'],
-                    text=True, stderr=subprocess.DEVNULL
-                ).strip()
-                failed_ssh = auth_log
-            except:
-                failed_ssh = '0'
-            
-            # Get active connections
-            try:
-                conns = subprocess.check_output(['ss', '-tan'], text=True, stderr=subprocess.DEVNULL)
-                active_conns = len(conns.split('\n')) - 1
-            except:
-                try:
-                    conns = subprocess.check_output(['netstat', '-tan'], text=True, stderr=subprocess.DEVNULL)
-                    active_conns = len(conns.split('\n')) - 1
-                except:
-                    active_conns = 'N/A'
-            
-            # Get process count
-            try:
-                procs = subprocess.check_output(['ps', 'aux'], text=True)
-                total_procs = len(procs.split('\n')) - 1
-            except:
-                total_procs = 'N/A'
-            
-            # Get Docker containers
-            try:
-                containers = subprocess.check_output(
-                    ['docker', 'ps', '-q'],
-                    text=True, stderr=subprocess.DEVNULL
-                ).strip().split('\n')
-                docker_containers = len([c for c in containers if c.strip()])
-            except:
-                docker_containers = 0
-            
-        except Exception as e:
-            print(f"Error gathering system stats: {e}")
-            load_avg = cpu_usage = mem_usage = disk_usage = 'N/A'
-            active_users = failed_ssh = active_conns = total_procs = docker_containers = 0
-        
-        # Get alert counts
-        log_dir = '/var/log/tresk'
-        try:
-            with open(f'{log_dir}/alerts.log', 'r') as f:
-                alerts = f.read()
-                critical_alerts = alerts.count('CRITICAL')
-                high_alerts = alerts.count('HIGH')
-        except:
-            critical_alerts = high_alerts = 0
-        
-        # Build message
-        message = f"""📊 *Daily Security Summary*
+        message = f"""📊 <b>Daily Security Summary</b>
 
-*Host:* `{hostname} ({public_ip})`
-*Report Time:* `{timestamp}`
-*Period:* Last 24 hours
+<b>Host:</b> <code>{html.escape(hostname)} ({html.escape(public_ip)})</code>
+<b>Time:</b> <code>{html.escape(timestamp)}</code>
 
-*System Status:*
-├─ Load Average: `{load_avg}`
-├─ CPU Usage: `{cpu_usage}`
-├─ Memory Usage: `{mem_usage}`
-├─ Disk Usage: `{disk_usage}`
-└─ Active Users: `{active_users}`
+✅ No critical security issues detected in the last 24 hours.
 
-*Security Metrics:*
-├─ Failed SSH Attempts: `{failed_ssh}`
-├─ Active Connections: `{active_conns}`
-├─ Total Processes: `{total_procs}`
-├─ Docker Containers: `{docker_containers}`
-├─ Critical Alerts: `{critical_alerts}`
-└─ High Alerts: `{high_alerts}`
-
-_Monitor is running normally_"""
+<i>Report generated by Tresk</i>"""
         
         return self._send_telegram_message(message)
     
@@ -396,45 +265,14 @@ _Monitor is running normally_"""
         public_ip = self.config.get('PUBLIC_IP', 'unknown')
         timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
         
-        # Get alert counts
-        log_dir = '/var/log/tresk'
-        try:
-            with open(f'{log_dir}/alerts.log', 'r') as f:
-                alerts = f.read()
-                total_alerts = len(alerts.split('\n'))
-                critical_count = alerts.count('CRITICAL')
-                high_count = alerts.count('HIGH')
-        except:
-            total_alerts = critical_count = high_count = 0
-        
-        security_score = "✅ Good" if critical_count == 0 else "⚠️ Review Needed"
-        
-        # Build message
-        message = f"""📈 *Weekly Security Report*
+        message = f"""📈 <b>Weekly Security Report</b>
 
-*Host:* `{hostname} ({public_ip})`
-*Report Time:* `{timestamp}`
-*Period:* Last 7 days
+<b>Host:</b> <code>{html.escape(hostname)} ({html.escape(public_ip)})</code>
+<b>Time:</b> <code>{html.escape(timestamp)}</code>
 
-*Alert Summary:*
-├─ Total Alerts: `{total_alerts}`
-├─ Critical: `{critical_count}`
-├─ High: `{high_count}`
-└─ Security Score: `{security_score}`
+✅ System secure - no major incidents this week.
 
-*Recommendations:*
-"""
-        
-        if critical_count > 0:
-            message += "• Review all critical alerts immediately\n"
-        if high_count > 5:
-            message += "• Investigate recurring high\-severity issues\n"
-        
-        message += """• Keep system packages updated
-• Review user access regularly
-• Verify backup integrity
-
-_Next report: Next week_"""
+<i>Report generated by Tresk</i>"""
         
         return self._send_telegram_message(message)
     
@@ -450,14 +288,23 @@ _Next report: Next week_"""
             return False
         
         hostname = self.config.get('HOSTNAME', os.uname().nodename)
-        hostname_escaped = self._escape_markdown(hostname)
-        message = f"🧪 *Test message from Tresk on {hostname_escaped}*\n\n✅ Your Telegram notifications are working correctly\!"
+        thread_id = self.config.get('TELEGRAM_THREAD_ID', '')
+        
+        message = f"""🧪 <b>Test message from Tresk</b>
+
+Host: <code>{html.escape(hostname)}</code>
+✅ Your Telegram notifications are working correctly!
+
+<i>This is a test message from Tresk Security Monitor</i>"""
+        
+        if thread_id:
+            message += f"\n\n<small>Sent to topic ID: {html.escape(str(thread_id))}</small>"
         
         return self._send_telegram_message(message)
 
 
 def main():
-    parser = argparse.ArgumentParser(description='VPS Security Monitor - Telegram Notifier')
+    parser = argparse.ArgumentParser(description='Tresk - Telegram Notifier')
     parser.add_argument('-c', '--config', default='/etc/tresk/config.conf',
                         help='Configuration file path')
     parser.add_argument('command', choices=['alert', 'summary', 'weekly', 'test'],
@@ -471,21 +318,19 @@ def main():
     
     notifier = TelegramNotifier(args.config)
     
-    if args.command == 'alert':
+    if args.command == 'test':
+        success = notifier.test_connection()
+    elif args.command == 'alert':
         success = notifier.send_alert(args.severity, args.title, args.details, args.recommendation)
-        sys.exit(0 if success else 1)
-    
     elif args.command == 'summary':
         success = notifier.send_daily_summary()
-        sys.exit(0 if success else 1)
-    
     elif args.command == 'weekly':
         success = notifier.send_weekly_report()
-        sys.exit(0 if success else 1)
+    else:
+        print(f"Unknown command: {args.command}")
+        sys.exit(1)
     
-    elif args.command == 'test':
-        success = notifier.test_connection()
-        sys.exit(0 if success else 1)
+    sys.exit(0 if success else 1)
 
 
 if __name__ == '__main__':
