@@ -73,9 +73,9 @@ main() {
     
     # Download systemd files
     for file in tresk.service tresk-network.service \
-                vps-security-deep-scan.service vps-security-deep-scan.timer \
-                vps-security-summary.service vps-security-summary.timer \
-                vps-security-weekly.service vps-security-weekly.timer; do
+                tresk-deep-scan.service tresk-deep-scan.timer \
+                tresk-summary.service tresk-summary.timer \
+                tresk-weekly.service tresk-weekly.timer; do
         $DOWNLOAD_CMD "${REPO_URL}/systemd/${file}" > "systemd/${file}" || true
     done
 
