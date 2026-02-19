@@ -279,7 +279,7 @@ detect_rootkits() {
         if [[ $((sys_modules - lsmod_modules)) -gt 5 ]]; then
             send_alert "CRITICAL" "Possible Hidden Kernel Modules" \
                 "sys/module count: $sys_modules\nlsmod count: $lsmod_modules\nDifference suggests module hiding" \
-                "Investigate: ls /sys/module/ | diff - <(lsmod | awk 'NR>1 {print $1}')"
+                "Investigate: ls /sys/module/ | diff - <(lsmod | awk 'NR>1 {print \$1}')"
         fi
     fi
     
@@ -948,12 +948,18 @@ EOF
     # Send to Telegram
     local telegram_url="https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage"
     
+    # Build curl data
+    local curl_data
+    curl_data="chat_id=${TELEGRAM_CHAT_ID}&text=${message}&parse_mode=Markdown&disable_web_page_preview=true"
+    
+    # Add message_thread_id if configured (for forum topics)
+    if [[ -n "${TELEGRAM_THREAD_ID:-}" ]]; then
+        curl_data="${curl_data}&message_thread_id=${TELEGRAM_THREAD_ID}"
+    fi
+    
     local response
     response=$(curl -s -X POST "$telegram_url" \
-        -d "chat_id=${TELEGRAM_CHAT_ID}" \
-        -d "text=${message}" \
-        -d "parse_mode=Markdown" \
-        -d "disable_web_page_preview=true" \
+        -d "$curl_data" \
         -m 10 2>/dev/null)
     
     if echo "$response" | grep -q '"ok":true'; then
@@ -1065,11 +1071,17 @@ EOF
     # Send to Telegram
     local telegram_url="https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage"
     
+    # Build curl data
+    local curl_data
+    curl_data="chat_id=${TELEGRAM_CHAT_ID}&text=${message}&parse_mode=Markdown&disable_web_page_preview=true"
+    
+    # Add message_thread_id if configured (for forum topics)
+    if [[ -n "${TELEGRAM_THREAD_ID:-}" ]]; then
+        curl_data="${curl_data}&message_thread_id=${TELEGRAM_THREAD_ID}"
+    fi
+    
     curl -s -X POST "$telegram_url" \
-        -d "chat_id=${TELEGRAM_CHAT_ID}" \
-        -d "text=${message}" \
-        -d "parse_mode=Markdown" \
-        -d "disable_web_page_preview=true" \
+        -d "$curl_data" \
         -m 15 2>/dev/null
     
     log INFO "Daily summary sent"
@@ -1130,11 +1142,17 @@ EOF
     # Send to Telegram
     local telegram_url="https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage"
     
+    # Build curl data
+    local curl_data
+    curl_data="chat_id=${TELEGRAM_CHAT_ID}&text=${message}&parse_mode=Markdown&disable_web_page_preview=true"
+    
+    # Add message_thread_id if configured (for forum topics)
+    if [[ -n "${TELEGRAM_THREAD_ID:-}" ]]; then
+        curl_data="${curl_data}&message_thread_id=${TELEGRAM_THREAD_ID}"
+    fi
+    
     curl -s -X POST "$telegram_url" \
-        -d "chat_id=${TELEGRAM_CHAT_ID}" \
-        -d "text=${message}" \
-        -d "parse_mode=Markdown" \
-        -d "disable_web_page_preview=true" \
+        -d "$curl_data" \
         -m 15 2>/dev/null
     
     log INFO "Weekly report sent"
@@ -1335,10 +1353,19 @@ test_telegram() {
     
     local telegram_url="https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage"
     
+    # Build curl data
+    local curl_data
+    curl_data="chat_id=${TELEGRAM_CHAT_ID}&text=🧪 Test message from Tresk on $(hostname)"
+    
+    # Add message_thread_id if configured (for forum topics)
+    if [[ -n "${TELEGRAM_THREAD_ID:-}" ]]; then
+        curl_data="${curl_data}&message_thread_id=${TELEGRAM_THREAD_ID}"
+        log INFO "Sending test message to topic ID: ${TELEGRAM_THREAD_ID}"
+    fi
+    
     local response
     response=$(curl -s -X POST "$telegram_url" \
-        -d "chat_id=${TELEGRAM_CHAT_ID}" \
-        -d "text=🧪 Test message from VPS Security Monitor on $(hostname)" \
+        -d "$curl_data" \
         -m 10 2>/dev/null)
     
     if echo "$response" | grep -q '"ok":true'; then
