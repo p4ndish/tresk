@@ -146,9 +146,39 @@ detect_cryptominers() {
                     fi
                     # Check if process is in protected list
                     if [[ ! "$cmd" =~ $PROTECTED_PROCESSES ]]; then
+                        # AI Analysis
+                        local ai_result
+                        local ai_is_threat="true"
+                        local ai_confidence="0.0"
+                        local ai_explanation=""
+                        
+                        if [[ "${AI_ANALYSIS_ENABLED:-false}" == "true" ]]; then
+                            ai_result=$(analyze_with_ai "$pid" "$cmd" "cryptominer_signature")
+                            ai_is_threat=$(echo "$ai_result" | python3 -c "import sys,json; print(json.load(sys.stdin).get('is_threat', True))" 2>/dev/null || echo "true")
+                            ai_confidence=$(echo "$ai_result" | python3 -c "import sys,json; print(json.load(sys.stdin).get('confidence', 0.0))" 2>/dev/null || echo "0.0")
+                            ai_explanation=$(echo "$ai_result" | python3 -c "import sys,json; print(json.load(sys.stdin).get('explanation', ''))" 2>/dev/null || echo "")
+                            
+                            log INFO "AI Analysis: PID $pid - Threat: $ai_is_threat (confidence: $ai_confidence)"
+                        fi
+                        
+                        # Check AI confidence threshold
+                        local threshold="${AI_CONFIDENCE_THRESHOLD:-0.75}"
+                        if [[ "$ai_is_threat" == "false" && $(echo "$ai_confidence >= $threshold" | bc -l) -eq 1 ]]; then
+                            log INFO "AI determined process $pid is likely legitimate: $ai_explanation"
+                            continue
+                        fi
+                        
                         threats_found+=("PID:$pid|CMD:$cmd")
+                        
+                        # Build alert details with AI info
+                        local alert_details
+                        alert_details="Process: $cmd\nPID: $pid\nType: Known cryptominer signature"
+                        if [[ -n "$ai_explanation" ]]; then
+                            alert_details="${alert_details}\n\n🤖 AI Analysis: $ai_explanation (confidence: ${ai_confidence})"
+                        fi
+                        
                         send_alert "CRITICAL" "Cryptominer Detected" \
-                            "Process: $cmd\nPID: $pid\nType: Known cryptominer signature" \
+                            "$alert_details" \
                             "kill -9 $pid"
                         
                         if [[ "${AUTO_KILL_CRITICAL:-false}" == "true" ]]; then
@@ -844,6 +874,49 @@ detect_docker_api_abuse() {
                 "Investigate: Check Docker logs; Review container creation events"
         fi
     fi
+}
+
+# =============================================================================
+# AI THREAT ANALYSIS FUNCTION
+# =============================================================================
+
+analyze_with_ai() {
+    local pid="$1"
+    local cmd="$2"
+    local detection_type="$3"
+    
+    # Check if AI analysis is enabled
+    if [[ "${AI_ANALYSIS_ENABLED:-false}" != "true" ]]; then
+        echo '{"is_threat": true, "confidence": 0.0, "explanation": "AI disabled"}'
+        return 0
+    fi
+    
+    # Check if API key is configured
+    if [[ -z "${KIMI_API_KEY:-}" ]]; then
+        log WARNING "AI analysis enabled but KIMI_API_KEY not set"
+        echo '{"is_threat": true, "confidence": 0.0, "explanation": "No API key"}'
+        return 0
+    fi
+    
+    # Quick local checks first (fast, no API call)
+    # Skip AI for known system processes
+    if [[ "$pid" =~ ^[0-9]+$ && "$pid" -lt 100 ]]; then
+        echo '{"is_threat": false, "confidence": 0.95, "explanation": "System process (PID < 100)", "source": "pid_heuristic"}'
+        return 0
+    fi
+    
+    # Known legitimate processes
+    local whitelist="kthreadd|ksoftirqd|kworker|migration|watchdog|systemd|sshd|cron|dbus|networkd|irqbalance|rsyslogd"
+    if echo "$cmd" | grep -qiE "$whitelist"; then
+        echo '{"is_threat": false, "confidence": 0.90, "explanation": "Known legitimate system process", "source": "whitelist"}'
+        return 0
+    fi
+    
+    # Call AI analyzer
+    local ai_result
+    ai_result=$("${WORK_DIR}/lib/ai_analyzer.py" "$pid" "$cmd" --reason "$detection_type" 2>/dev/null || echo '{"is_threat": true, "confidence": 0.0}')
+    
+    echo "$ai_result"
 }
 
 # =============================================================================
