@@ -10,7 +10,7 @@ set -e
 
 readonly REPO_URL="https://raw.githubusercontent.com/yourusername/tresk/main"
 readonly INSTALLER_URL="${REPO_URL}/install.sh"
-readonly TEMP_DIR="/tmp/vps-security-monitor-install"
+readonly TEMP_DIR="/tmp/tresk-install"
 
 cleanup() {
     rm -rf "$TEMP_DIR"
@@ -72,7 +72,7 @@ main() {
     $DOWNLOAD_CMD "${REPO_URL}/signatures/threat_signatures.json" > signatures/threat_signatures.json || true
     
     # Download systemd files
-    for file in vps-security-monitor.service vps-security-network.service \
+    for file in tresk.service tresk-network.service \
                 vps-security-deep-scan.service vps-security-deep-scan.timer \
                 vps-security-summary.service vps-security-summary.timer \
                 vps-security-weekly.service vps-security-weekly.timer; do

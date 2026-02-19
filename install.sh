@@ -366,7 +366,7 @@ EOF
 setup_cron() {
     log STEP "Setting up cron jobs (portable mode)..."
     
-    local cron_file="/etc/cron.d/vps-security-monitor"
+    local cron_file="/etc/cron.d/tresk"
     
     cat > "$cron_file" <<EOF
 # VPS Security Monitor Cron Jobs
@@ -428,7 +428,7 @@ start_services() {
         3)
             log INFO "Services not started automatically"
             echo "You can start them manually with:"
-            echo "  systemctl start vps-security-monitor"
+            echo "  systemctl start tresk"
             ;;
         
         *)
@@ -503,6 +503,7 @@ uninstall() {
     
     # Remove logrotate config
     rm -f /etc/logrotate.d/tresk
+    rm -f /etc/logrotate.d/tresk  # Legacy cleanup
     rm -f /etc/logrotate.d/vps-security-monitor  # Legacy cleanup
     
     # Remove command symlink
@@ -679,8 +680,8 @@ main() {
     
     if [[ "$use_systemd" == true ]]; then
         echo "Useful commands:"
-        echo "  systemctl status vps-security-monitor    # Check service status"
-        echo "  journalctl -u vps-security-monitor -f    # View live logs"
+        echo "  systemctl status tresk    # Check service status"
+        echo "  journalctl -u tresk -f    # View live logs"
     else
         echo "Cron jobs are configured for periodic scanning."
         echo "To run manually: ${INSTALL_DIR}/bin/monitor.sh quick"

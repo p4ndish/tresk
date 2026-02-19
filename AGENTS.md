@@ -62,10 +62,10 @@ tresk/
 
 ```bash
 # Using curl
-curl -fsSL https://raw.githubusercontent.com/yourusername/vps-security-monitor/main/bootstrap.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/yourusername/tresk/main/bootstrap.sh | sudo bash
 
 # Using wget
-wget -qO- https://raw.githubusercontent.com/yourusername/vps-security-monitor/main/bootstrap.sh | sudo bash
+wget -qO- https://raw.githubusercontent.com/yourusername/tresk/main/bootstrap.sh | sudo bash
 ```
 
 ### Local Installation Commands
@@ -114,17 +114,17 @@ sudo ./uninstall.sh
 
 ```bash
 # Start/stop/restart
-sudo systemctl start vps-security-monitor
-sudo systemctl stop vps-security-monitor
-sudo systemctl restart vps-security-monitor
+sudo systemctl start tresk
+sudo systemctl stop tresk
+sudo systemctl restart tresk
 
 # View status and logs
-systemctl status vps-security-monitor
-journalctl -u vps-security-monitor -f
+systemctl status tresk
+journalctl -u tresk -f
 
 # Enable/disable on boot
-sudo systemctl enable vps-security-monitor
-sudo systemctl disable vps-security-monitor
+sudo systemctl enable tresk
+sudo systemctl disable tresk
 ```
 
 ## Code Organization
@@ -223,7 +223,7 @@ Configuration is stored in `/etc/tresk/config.conf` as a shell-sourced file:
 | `/var/log/tresk/rkhunter.log` | RKHunter output |
 | `/var/log/tresk/chkrootkit.log` | Chkrootkit output |
 
-View logs: `journalctl -u vps-security-monitor -f` or `tail -f /var/log/tresk/monitor.log`
+View logs: `journalctl -u tresk -f` or `tail -f /var/log/tresk/monitor.log`
 
 ## Code Style Guidelines
 
@@ -352,7 +352,7 @@ sudo ./bin/monitor.sh quick
 ### Update Threat Signatures
 ```bash
 curl -o /opt/tresk/signatures/threat_signatures.json \
-  https://raw.githubusercontent.com/vps-security-monitor/main/signatures/threat_signatures.json
+  https://raw.githubusercontent.com/yourusername/tresk/main/signatures/threat_signatures.json
 ```
 
 ### Reset Alert State
