@@ -19,32 +19,57 @@ When Tresk detects a potential threat, the AI analyzer:
 
 ## Setup
 
-### 1. Get Kimi K2 API Key
+### 1. Get Kimi API Key
 
+Choose ONE of the following options:
+
+#### Option A: Moonshot API (Recommended)
 1. Visit https://platform.moonshot.cn/
 2. Create an account
 3. Generate an API key
 4. Copy the key (starts with `sk-`)
 
+#### Option B: Kimi Code API
+1. Visit https://www.kimi.com/code/console
+2. Look for API Keys section
+3. Generate an API key
+4. Note the API endpoint URL (may differ from Moonshot)
+
 ### 2. Configure Tresk
 
 Edit `/etc/tresk/config.conf`:
 
+#### For Moonshot API:
 ```bash
 # Enable AI analysis
 AI_ANALYSIS_ENABLED="true"
 
-# Your Kimi K2 API Key
-KIMI_API_KEY="sk-your-actual-api-key-here"
+# Moonshot API Settings
+KIMI_API_KEY="sk-your-moonshot-api-key"
+KIMI_API_URL="https://api.moonshot.cn/v1/chat/completions"
+KIMI_MODEL="kimi-k2-0712-preview"
 
 # Confidence threshold (0.0 - 1.0)
-# Higher = more conservative, fewer false positives
 AI_CONFIDENCE_THRESHOLD="0.75"
 
-# AI Mode:
-#   "conservative" - AI must confirm threat before alerting (RECOMMENDED)
-#   "assisted"     - AI analyzes but alerts anyway (logs AI opinion)
-#   "disabled"     - No AI analysis
+# AI Mode
+AI_MODE="conservative"
+```
+
+#### For Kimi Code API:
+```bash
+# Enable AI analysis
+AI_ANALYSIS_ENABLED="true"
+
+# Kimi Code API Settings
+KIMI_API_KEY="sk-your-kimi-code-api-key"
+KIMI_API_URL="https://api.kimi.com/v1/chat/completions"
+KIMI_MODEL="kimi-k2-0712-preview"
+
+# Confidence threshold
+AI_CONFIDENCE_THRESHOLD="0.75"
+
+# AI Mode
 AI_MODE="conservative"
 ```
 
@@ -54,7 +79,29 @@ AI_MODE="conservative"
 sudo systemctl restart tresk
 ```
 
-### 4. Test
+### 4. Test API Connection
+
+Test your API key before enabling in Tresk:
+
+#### Test Moonshot API:
+```bash
+export KIMI_API_KEY="sk-your-moonshot-key"
+curl -s -X POST https://api.moonshot.cn/v1/chat/completions \
+  -H "Authorization: Bearer $KIMI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"kimi-k2-0712-preview","messages":[{"role":"user","content":"Hello"}]}'
+```
+
+#### Test Kimi Code API:
+```bash
+export KIMI_API_KEY="sk-your-kimi-code-key"
+curl -s -X POST https://api.kimi.com/v1/chat/completions \
+  -H "Authorization: Bearer $KIMI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"kimi-k2-0712-preview","messages":[{"role":"user","content":"Hello"}]}'
+```
+
+### 5. Test Tresk AI Module
 
 ```bash
 # Test AI analyzer directly
