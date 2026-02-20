@@ -17,8 +17,10 @@ class AIThreatAnalyzer:
     """AI-powered threat analysis using Kimi K2"""
     
     def __init__(self, api_key: Optional[str] = None, config_file: str = "/etc/tresk/config.conf"):
+        self.config_file = config_file
         self.api_key = api_key or self._load_api_key(config_file)
-        self.api_url = "https://api.moonshot.cn/v1/chat/completions"
+        self.api_url = self._load_api_url()
+        self.model = self._load_model()
         self.enabled = self.api_key is not None and len(self.api_key) > 10
         
     def _load_api_key(self, config_file: str) -> Optional[str]:
@@ -30,9 +32,40 @@ class AIThreatAnalyzer:
                         line = line.strip()
                         if line.startswith('KIMI_API_KEY='):
                             return line.split('=', 1)[1].strip().strip('"').strip("'")
+                        # Also check for KIMI_CODE_API_KEY
+                        if line.startswith('KIMI_CODE_API_KEY='):
+                            return line.split('=', 1)[1].strip().strip('"').strip("'")
         except Exception as e:
             print(f"Error loading API key: {e}")
         return None
+    
+    def _load_api_url(self) -> str:
+        """Load API URL from config or use default"""
+        try:
+            if os.path.exists(self.config_file):
+                with open(self.config_file, 'r') as f:
+                    for line in f:
+                        line = line.strip()
+                        if line.startswith('KIMI_API_URL='):
+                            return line.split('=', 1)[1].strip().strip('"').strip("'")
+        except:
+            pass
+        # Default to Moonshot API
+        return "https://api.moonshot.cn/v1/chat/completions"
+    
+    def _load_model(self) -> str:
+        """Load model from config or use default"""
+        try:
+            if os.path.exists(self.config_file):
+                with open(self.config_file, 'r') as f:
+                    for line in f:
+                        line = line.strip()
+                        if line.startswith('KIMI_MODEL='):
+                            return line.split('=', 1)[1].strip().strip('"').strip("'")
+        except:
+            pass
+        # Default model
+        return "kimi-k2-0712-preview"
     
     def analyze_process(self, pid: str, cmd: str, detection_reason: str) -> Tuple[bool, str, float]:
         """
@@ -88,7 +121,7 @@ Be conservative - when in doubt, classify as suspicious."""
         }
         
         payload = {
-            "model": "kimi-k2-0712-preview",  # Latest Kimi K2 model
+            "model": self.model,
             "messages": [
                 {
                     "role": "system",
