@@ -937,15 +937,16 @@ send_alert() {
     fi
     
     # Check alert cooldown
+    # Generate unique key from title + details to prevent duplicate alerts for same process
     local alert_key
-    alert_key=$(echo "$title" | sha256sum | awk '{print $1}')
+    alert_key=$(echo "${title}:${details}" | sha256sum | awk '{print $1}')
     local state_file="${ALERT_STATE_DIR}/${alert_key}"
     
     local cooldown=0
     case "$severity" in
-        CRITICAL) cooldown="${ALERT_COOLDOWN_CRITICAL:-0}" ;;
-        HIGH) cooldown="${ALERT_COOLDOWN_HIGH:-60}" ;;
-        MEDIUM) cooldown="${ALERT_COOLDOWN_MEDIUM:-300}" ;;
+        CRITICAL) cooldown="${ALERT_COOLDOWN_CRITICAL:-300}" ;;
+        HIGH) cooldown="${ALERT_COOLDOWN_HIGH:-600}" ;;
+        MEDIUM) cooldown="${ALERT_COOLDOWN_MEDIUM:-1800}" ;;
         LOW) cooldown="${ALERT_COOLDOWN_LOW:-3600}" ;;
     esac
     
@@ -956,7 +957,8 @@ send_alert() {
         current_time=$(date +%s)
         
         if [[ $((current_time - last_alert)) -lt "$cooldown" ]]; then
-            log DEBUG "Alert cooldown active for: $title"
+            local remaining=$((cooldown - (current_time - last_alert)))
+            log DEBUG "Alert cooldown active for: $title (${remaining}s remaining)"
             return
         fi
     fi
