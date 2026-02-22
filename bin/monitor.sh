@@ -1255,6 +1255,7 @@ Commands:
     summary         Send daily summary report
     weekly          Send weekly report
     test-telegram   Test Telegram connectivity
+    harden          Security hardening (firewall, fail2ban, etc.)
     help            Show this help message
 
 Options:
@@ -1267,6 +1268,8 @@ Examples:
     $(basename "$0") quick                    # Quick security scan
     $(basename "$0") deep                     # Deep security scan
     $(basename "$0") monitor                  # Start monitoring
+    $(basename "$0") harden                   # Full VPS hardening
+    $(basename "$0") harden --status          # Check hardening status
     $(basename "$0") -c /path/to/config.conf  # Use custom config
 
 EOF
@@ -1489,7 +1492,7 @@ main() {
                 DRY_RUN="true"
                 shift
                 ;;
-            quick|deep|full|monitor|summary|weekly|test-telegram|help)
+            quick|deep|full|monitor|summary|weekly|test-telegram|harden|help)
                 command="$1"
                 shift
                 ;;
@@ -1537,6 +1540,15 @@ main() {
             ;;
         test-telegram)
             test_telegram
+            ;;
+        harden)
+            check_root
+            if [[ -f "${WORK_DIR}/lib/harden.sh" ]]; then
+                exec "${WORK_DIR}/lib/harden.sh" "$@"
+            else
+                log ERROR "Hardening module not found"
+                exit 1
+            fi
             ;;
         help)
             show_help

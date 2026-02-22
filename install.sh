@@ -241,6 +241,21 @@ install_files() {
         chmod +x "${INSTALL_DIR}/lib/telegram_notifier.py"
     fi
     
+    if [[ -f "${source_dir}/lib/process_analyzer.py" ]]; then
+        cp "${source_dir}/lib/process_analyzer.py" "${INSTALL_DIR}/lib/"
+        chmod +x "${INSTALL_DIR}/lib/process_analyzer.py"
+    fi
+    
+    if [[ -f "${source_dir}/lib/ai_analyzer.py" ]]; then
+        cp "${source_dir}/lib/ai_analyzer.py" "${INSTALL_DIR}/lib/"
+        chmod +x "${INSTALL_DIR}/lib/ai_analyzer.py"
+    fi
+    
+    if [[ -f "${source_dir}/lib/harden.sh" ]]; then
+        cp "${source_dir}/lib/harden.sh" "${INSTALL_DIR}/lib/"
+        chmod +x "${INSTALL_DIR}/lib/harden.sh"
+    fi
+    
     # Copy signatures
     if [[ -f "${source_dir}/signatures/threat_signatures.json" ]]; then
         cp "${source_dir}/signatures/threat_signatures.json" "${INSTALL_DIR}/signatures/"
