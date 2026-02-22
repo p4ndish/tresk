@@ -256,6 +256,12 @@ install_files() {
         chmod +x "${INSTALL_DIR}/lib/harden.sh"
     fi
     
+    # Copy uninstall script for later use
+    if [[ -f "${source_dir}/uninstall.sh" ]]; then
+        cp "${source_dir}/uninstall.sh" "${INSTALL_DIR}/lib/"
+        chmod +x "${INSTALL_DIR}/lib/uninstall.sh"
+    fi
+    
     # Copy signatures
     if [[ -f "${source_dir}/signatures/threat_signatures.json" ]]; then
         cp "${source_dir}/signatures/threat_signatures.json" "${INSTALL_DIR}/signatures/"
@@ -513,39 +519,22 @@ verify_installation() {
 # =============================================================================
 
 uninstall() {
-    log STEP "Uninstalling Tresk..."
-    
-    # Stop and disable services
-    systemctl stop tresk.service 2>/dev/null || true
-    systemctl stop tresk-deep-scan.timer 2>/dev/null || true
-    systemctl stop tresk-summary.timer 2>/dev/null || true
-    systemctl stop tresk-weekly.timer 2>/dev/null || true
-    
-    systemctl disable tresk.service 2>/dev/null || true
-    systemctl disable tresk-deep-scan.timer 2>/dev/null || true
-    systemctl disable tresk-summary.timer 2>/dev/null || true
-    systemctl disable tresk-weekly.timer 2>/dev/null || true
-    
-    # Remove systemd files
-    rm -f "${SYSTEMD_DIR}/tresk.service"
-    rm -f "${SYSTEMD_DIR}"/tresk-*.service
-    rm -f "${SYSTEMD_DIR}"/tresk-*.timer
-    systemctl daemon-reload
-    
-    # Remove installation directory
-    rm -rf "$INSTALL_DIR"
-    rm -rf "$CONFIG_DIR"
-    rm -rf "$LOG_DIR"
-    
-    # Remove logrotate config
-    rm -f /etc/logrotate.d/tresk
-    rm -f /etc/logrotate.d/tresk  # Legacy cleanup
-    rm -f /etc/logrotate.d/vps-security-monitor  # Legacy cleanup
-    
-    # Remove command symlink
-    rm -f /usr/local/bin/tresk
-    
-    log SUCCESS "Tresk uninstalled successfully"
+    # Use the standalone uninstall script if available
+    if [[ -f "${INSTALL_DIR}/lib/uninstall.sh" ]]; then
+        log INFO "Using standalone uninstall script..."
+        bash "${INSTALL_DIR}/lib/uninstall.sh" "$@"
+    elif [[ -f "./uninstall.sh" ]]; then
+        log INFO "Using local uninstall script..."
+        bash ./uninstall.sh "$@"
+    else
+        log ERROR "Uninstall script not found"
+        log INFO "You can manually remove Tresk by deleting:"
+        echo "  - $INSTALL_DIR"
+        echo "  - $CONFIG_DIR"
+        echo "  - /etc/systemd/system/tresk*"
+        echo "  - /usr/local/bin/tresk"
+        exit 1
+    fi
 }
 
 # =============================================================================
@@ -592,6 +581,11 @@ Examples:
     $0 --no-telegram      # Install without Telegram setup
     $0 --portable         # Install without systemd (cron-based)
     $0 --uninstall        # Remove all components
+
+Uninstall Options:
+    $0 --uninstall --dry-run     # Preview what would be removed
+    $0 --uninstall --yes         # Skip confirmation prompt
+    $0 --uninstall --remove-logs # Also remove all log files
 
 EOF
 }
@@ -640,7 +634,8 @@ main() {
     print_banner
     
     if [[ "$uninstall_mode" == true ]]; then
-        uninstall
+        shift  # Remove --uninstall from args
+        uninstall "$@"
         exit 0
     fi
     
